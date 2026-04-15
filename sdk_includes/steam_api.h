@@ -182,6 +182,7 @@
 #include "isteaminput002.h"
 #include "isteaminput005.h"
 #include "isteamremoteplay.h"
+#include "isteamtimeline.h"
 #include "isteamnetworkingmessages.h"
 #include "isteamnetworkingsockets.h"
 #include "isteamnetworkingutils.h"

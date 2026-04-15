@@ -221,6 +221,61 @@ STEAMAPI_API void * S_CALLTYPE SteamInternal_CreateInterface( const char *ver )
 static uintp global_counter;
 struct ContextInitData { void (*pFn)(void* pCtx); uintp counter; CSteamAPIContext ctx; };
 
+namespace {
+
+enum ESteamAPIInitResult_Compat {
+    k_ESteamAPIInitResult_OK = 0,
+    k_ESteamAPIInitResult_FailedGeneric = 1,
+    k_ESteamAPIInitResult_NoSteamClient = 2,
+    k_ESteamAPIInitResult_VersionMismatch = 3,
+};
+
+constexpr size_t kCompatSteamErrMsgSize = 1024;
+
+void clear_steam_api_init_errmsg(char *pOutErrMsg)
+{
+    if (pOutErrMsg) {
+        pOutErrMsg[0] = '\0';
+    }
+}
+
+void write_steam_api_init_errmsg(char *pOutErrMsg, const char *msg)
+{
+    if (!pOutErrMsg) {
+        return;
+    }
+
+    snprintf(pOutErrMsg, kCompatSteamErrMsgSize, "%s", msg ? msg : "");
+}
+
+bool verify_interface_versions(HSteamUser hSteamUser, bool server, const char *pszInternalCheckInterfaceVersions, char *pOutErrMsg)
+{
+    if (!pszInternalCheckInterfaceVersions) {
+        clear_steam_api_init_errmsg(pOutErrMsg);
+        return true;
+    }
+
+    for (const char *interface_version = pszInternalCheckInterfaceVersions;
+         *interface_version;
+         interface_version += strlen(interface_version) + 1) {
+        void *iface = server
+            ? SteamInternal_FindOrCreateGameServerInterface(hSteamUser, interface_version)
+            : SteamInternal_FindOrCreateUserInterface(hSteamUser, interface_version);
+
+        if (!iface) {
+            PRINT_DEBUG("Unsupported interface version requested during init: %s\n", interface_version);
+            std::string err = std::string("Unsupported Steam interface version: ") + interface_version;
+            write_steam_api_init_errmsg(pOutErrMsg, err.c_str());
+            return false;
+        }
+    }
+
+    clear_steam_api_init_errmsg(pOutErrMsg);
+    return true;
+}
+
+} // namespace
+
 STEAMAPI_API void * S_CALLTYPE SteamInternal_ContextInit( void *pContextInitData )
 {
     //PRINT_DEBUG("SteamInternal_ContextInit\n");
@@ -251,6 +306,33 @@ STEAMAPI_API steam_bool S_CALLTYPE SteamAPI_Init()
     client->ConnectToGlobalUser(user_steam_pipe);
     global_counter++;
     return true;
+}
+
+STEAMAPI_API int S_CALLTYPE SteamAPI_InitFlat(char *pOutErrMsg)
+{
+    PRINT_DEBUG("SteamAPI_InitFlat called\n");
+    if (!SteamAPI_Init()) {
+        write_steam_api_init_errmsg(pOutErrMsg, "SteamAPI_Init failed");
+        return k_ESteamAPIInitResult_FailedGeneric;
+    }
+
+    clear_steam_api_init_errmsg(pOutErrMsg);
+    return k_ESteamAPIInitResult_OK;
+}
+
+STEAMAPI_API int S_CALLTYPE SteamInternal_SteamAPI_Init(const char *pszInternalCheckInterfaceVersions, char *pOutErrMsg)
+{
+    PRINT_DEBUG("SteamInternal_SteamAPI_Init called\n");
+    if (!SteamAPI_Init()) {
+        write_steam_api_init_errmsg(pOutErrMsg, "SteamAPI_Init failed");
+        return k_ESteamAPIInitResult_FailedGeneric;
+    }
+
+    if (!verify_interface_versions(SteamAPI_GetHSteamUser(), false, pszInternalCheckInterfaceVersions, pOutErrMsg)) {
+        return k_ESteamAPIInitResult_VersionMismatch;
+    }
+
+    return k_ESteamAPIInitResult_OK;
 }
 
 //TODO: not sure if this is the right signature for this function.
@@ -637,6 +719,21 @@ STEAMAPI_API steam_bool S_CALLTYPE SteamInternal_GameServer_Init( uint32 unIP, u
     uint32 unFlags = 0;
     if (eServerMode == eServerModeAuthenticationAndSecure) unFlags = k_unServerFlagSecure;
     return get_steam_client()->steam_gameserver->InitGameServer(unIP, usGamePort, usQueryPort, unFlags, 0, pchVersionString);
+}
+
+STEAMAPI_API int S_CALLTYPE SteamInternal_GameServer_Init_V2(uint32 unIP, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString, const char *pszInternalCheckInterfaceVersions, char *pOutErrMsg)
+{
+    PRINT_DEBUG("SteamInternal_GameServer_Init_V2 %u %hu %hu %u %s\n", unIP, usGamePort, usQueryPort, eServerMode, pchVersionString ? pchVersionString : "");
+    if (!SteamInternal_GameServer_Init(unIP, 0, usGamePort, usQueryPort, eServerMode, pchVersionString)) {
+        write_steam_api_init_errmsg(pOutErrMsg, "SteamInternal_GameServer_Init failed");
+        return k_ESteamAPIInitResult_FailedGeneric;
+    }
+
+    if (!verify_interface_versions(SteamGameServer_GetHSteamUser(), true, pszInternalCheckInterfaceVersions, pOutErrMsg)) {
+        return k_ESteamAPIInitResult_VersionMismatch;
+    }
+
+    return k_ESteamAPIInitResult_OK;
 }
 
 //SteamGameServer004 and before:

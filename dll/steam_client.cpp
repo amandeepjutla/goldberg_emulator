@@ -100,6 +100,7 @@ Steam_Client::Steam_Client()
     steam_parties = new Steam_Parties(settings_client, network, callback_results_client, callbacks_client, run_every_runcb);
     steam_remoteplay = new Steam_RemotePlay(settings_client, network, callback_results_client, callbacks_client, run_every_runcb);
     steam_tv = new Steam_TV(settings_client, network, callback_results_client, callbacks_client, run_every_runcb);
+    steam_timeline = new Steam_Timeline();
 
     PRINT_DEBUG("client init gameserver\n");
     steam_gameserver = new Steam_GameServer(settings_server, network, callbacks_server);
@@ -165,6 +166,7 @@ Steam_Client::~Steam_Client()
     delete steam_parties;
     delete steam_remoteplay;
     delete steam_tv;
+    delete steam_timeline;
 
     delete steam_utils;
     delete steam_friends;
@@ -677,6 +679,9 @@ void *Steam_Client::GetISteamGenericInterface( HSteamUser hSteamUser, HSteamPipe
         return GetISteamInput(hSteamUser, hSteamPipe, pchVersion);
     } else if (strstr(pchVersion, "STEAMREMOTEPLAY_INTERFACE_VERSION") == pchVersion) {
         return GetISteamRemotePlay(hSteamUser, hSteamPipe, pchVersion);
+    } else if (strstr(pchVersion, "STEAMTIMELINE_INTERFACE_") == pchVersion) {
+        if (!steam_pipes.count(hSteamPipe) || !hSteamUser) return NULL;
+        return (void *)(ISteamTimeline *)steam_timeline;
     } else if (strstr(pchVersion, "STEAMPARENTALSETTINGS_INTERFACE_VERSION") == pchVersion) {
         return GetISteamParentalSettings(hSteamUser, hSteamPipe, pchVersion);
     } else {

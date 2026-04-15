@@ -197,8 +197,8 @@ inline std::string ascii_to_lowercase(std::string data) {
 #include "../sdk_includes/steamdatagram_tickets.h"
 
 // Emulator includes
-#include "local_storage.h"
 #include "net.pb.h"
+#include "local_storage.h"
 #include "network.h"
 #include "settings.h"
 

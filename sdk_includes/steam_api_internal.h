@@ -244,6 +244,7 @@ class ISteamInput;
 class ISteamParties;
 class ISteamTV;
 class ISteamRemotePlay;
+class ISteamTimeline;
 
 // Forward declare types
 struct SteamNetworkingIdentity;
@@ -319,6 +320,7 @@ enum { k_iClientSTARCallbacks = 5600 };
 enum { k_iSteamRemotePlayCallbacks = 5700 };
 enum { k_iClientCompatCallbacks = 5800 };
 enum { k_iSteamChatCallbacks = 5900 };
+enum { k_iSteamTimelineCallbacks = 6000 };
 enum { k_iClientNetworkingUtilsCallbacks = 6000 };
 enum { k_iClientSystemManagerCallbacks = 6100 };
 enum { k_iClientStorageDeviceManagerCallbacks = 6200 };

@@ -881,6 +881,27 @@ STEAMAPI_API steam_bool SteamAPI_ISteamInventory_SetPropertyFloat( ISteamInvento
 STEAMAPI_API steam_bool SteamAPI_ISteamInventory_SubmitUpdateProperties( ISteamInventory* self, SteamInventoryUpdateHandle_t handle, SteamInventoryResult_t * pResultHandle );
 STEAMAPI_API steam_bool SteamAPI_ISteamInventory_InspectItem( ISteamInventory* self, SteamInventoryResult_t * pResultHandle, const char * pchItemToken );
 
+// ISteamTimeline
+STEAMAPI_API ISteamTimeline *SteamAPI_SteamTimeline_v004();
+STEAMAPI_API void SteamAPI_ISteamTimeline_SetTimelineTooltip( ISteamTimeline* self, const char * pchDescription, float flTimeDelta );
+STEAMAPI_API void SteamAPI_ISteamTimeline_ClearTimelineTooltip( ISteamTimeline* self, float flTimeDelta );
+STEAMAPI_API void SteamAPI_ISteamTimeline_SetTimelineGameMode( ISteamTimeline* self, ETimelineGameMode eMode );
+STEAMAPI_API TimelineEventHandle_t SteamAPI_ISteamTimeline_AddInstantaneousTimelineEvent( ISteamTimeline* self, const char * pchTitle, const char * pchDescription, const char * pchIcon, uint32 unIconPriority, float flStartOffsetSeconds, ETimelineEventClipPriority ePossibleClip );
+STEAMAPI_API TimelineEventHandle_t SteamAPI_ISteamTimeline_AddRangeTimelineEvent( ISteamTimeline* self, const char * pchTitle, const char * pchDescription, const char * pchIcon, uint32 unIconPriority, float flStartOffsetSeconds, float flDuration, ETimelineEventClipPriority ePossibleClip );
+STEAMAPI_API TimelineEventHandle_t SteamAPI_ISteamTimeline_StartRangeTimelineEvent( ISteamTimeline* self, const char * pchTitle, const char * pchDescription, const char * pchIcon, uint32 unPriority, float flStartOffsetSeconds, ETimelineEventClipPriority ePossibleClip );
+STEAMAPI_API void SteamAPI_ISteamTimeline_UpdateRangeTimelineEvent( ISteamTimeline* self, TimelineEventHandle_t ulEvent, const char * pchTitle, const char * pchDescription, const char * pchIcon, uint32 unPriority, ETimelineEventClipPriority ePossibleClip );
+STEAMAPI_API void SteamAPI_ISteamTimeline_EndRangeTimelineEvent( ISteamTimeline* self, TimelineEventHandle_t ulEvent, float flEndOffsetSeconds );
+STEAMAPI_API void SteamAPI_ISteamTimeline_RemoveTimelineEvent( ISteamTimeline* self, TimelineEventHandle_t ulEvent );
+STEAMAPI_API SteamAPICall_t SteamAPI_ISteamTimeline_DoesEventRecordingExist( ISteamTimeline* self, TimelineEventHandle_t ulEvent );
+STEAMAPI_API void SteamAPI_ISteamTimeline_StartGamePhase( ISteamTimeline* self );
+STEAMAPI_API void SteamAPI_ISteamTimeline_EndGamePhase( ISteamTimeline* self );
+STEAMAPI_API void SteamAPI_ISteamTimeline_SetGamePhaseID( ISteamTimeline* self, const char * pchPhaseID );
+STEAMAPI_API SteamAPICall_t SteamAPI_ISteamTimeline_DoesGamePhaseRecordingExist( ISteamTimeline* self, const char * pchPhaseID );
+STEAMAPI_API void SteamAPI_ISteamTimeline_AddGamePhaseTag( ISteamTimeline* self, const char * pchTagName, const char * pchTagIcon, const char * pchTagGroup, uint32 unPriority );
+STEAMAPI_API void SteamAPI_ISteamTimeline_SetGamePhaseAttribute( ISteamTimeline* self, const char * pchAttributeGroup, const char * pchAttributeValue, uint32 unPriority );
+STEAMAPI_API void SteamAPI_ISteamTimeline_OpenOverlayToGamePhase( ISteamTimeline* self, const char * pchPhaseID );
+STEAMAPI_API void SteamAPI_ISteamTimeline_OpenOverlayToTimelineEvent( ISteamTimeline* self, const TimelineEventHandle_t ulEvent );
+
 // ISteamVideo
 STEAMAPI_API ISteamVideo *SteamAPI_SteamVideo_v002();
 STEAMAPI_API void SteamAPI_ISteamVideo_GetVideoURL( ISteamVideo* self, AppId_t unVideoAppID );

@@ -283,6 +283,38 @@ cd "<build folder>"
 make install
 ```
 
+### macOS / Apple Silicon
+
+This tree now supports native `arm64` builds on Apple Silicon when `protobuf` and `protoc` are installed through a package manager.
+
+- Apple builds no longer force `CMAKE_OSX_ARCHITECTURES` to `arm64;x86_64`. If no architecture is specified, CMake now defaults to the host architecture instead. This avoids accidentally turning a native `arm64` build into a universal build.
+- Apple builds no longer override an installed protobuf package with `FetchContent`. The build now uses the protobuf installation CMake finds on the system, which makes MacPorts and similar setups work correctly.
+- `net.pb.h` is included before `local_storage.h` because protobuf types such as `Common_Message` are referenced during compilation through shared headers.
+
+Example using MacPorts:
+
+```
+sudo port install protobuf3-cpp
+cmake -S . -B build-arm-port -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/opt/local -DProtobuf_ROOT=/opt/local -DCMAKE_OSX_ARCHITECTURES=arm64
+cmake --build build-arm-port -j8
+```
+
+That configuration was used to build native `arm64` versions of:
+- `libsteam_api.dylib`
+- `lobby_connect`
+- `generate_interfaces_file`
+
+### Newer Steamworks SDK / Steamworks.NET compatibility
+
+Some newer Steamworks consumers do not just call `SteamAPI_Init()`. They import newer init entry points and require more interfaces during context setup than older Goldberg builds exposed.
+
+- `SteamAPI_InitFlat`, `SteamInternal_SteamAPI_Init`, and `SteamInternal_GameServer_Init_V2` are now exported.
+- These compatibility entry points reuse Goldberg's existing init logic and validate the caller's null-delimited interface-version list. If a requested interface is missing, they return `k_ESteamAPIInitResult_VersionMismatch` and write an error string instead of failing with a missing symbol.
+- Current `Steamworks.NET` builds also expect `STEAMTIMELINE_INTERFACE_V004` during `CSteamAPIContext.Init()`. Goldberg previously had no `ISteamTimeline` implementation, which caused initialization to fall through to `k_ESteamAPIInitResult_FailedGeneric` even after the newer init export was added.
+- A minimal no-op `ISteamTimeline` implementation and the corresponding flat `SteamAPI_ISteamTimeline_*` exports are now present so newer managed/native bindings can finish interface resolution successfully.
+
+The `ISteamTimeline` shim is intentionally conservative. It provides interface presence, stable handles, and safe no-op behavior for compatibility. It does not attempt to emulate Steam's actual clip recording or timeline storage backend.
+
 ### Additional CMake Related Options
 
 #### Change the target build system

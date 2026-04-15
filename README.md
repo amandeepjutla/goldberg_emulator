@@ -1,3 +1,5 @@
+Note: this branch modified by codex to build on ARM for macos and to work with games that use a newer version of steamworks.
+
 # Goldberg Steam Emulator
 
 This is a steam emulator that emulates steam online features on a LAN. It works on both Linux and Windows. For a readme on how to use it see: [The Release Readme](Readme_release.txt)
